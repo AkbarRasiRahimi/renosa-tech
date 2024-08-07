@@ -1,6 +1,5 @@
 "use client";
-import Image from "next/image";
-import bgImage from "@/assets/image/background.png";
+
 import { useState, useEffect, useRef } from "react";
 import { getVerifyExpiry, verifyEmail } from "@/actions/verify-actions";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -85,8 +84,7 @@ export default function VerifyPage() {
   }, [email, router]);
 
   return (
-    <div className="w-screen h-screen flex flex-col justify-center items-center bg-neutral-focus relative">
-      <Image src={bgImage} alt="bg" className="w-full h-full object-cover absolute top-0 left-0 " />
+    <>
       <div className="w-[300px] p-6 bg-white rounded-lg shadow-md z-10">
         <h1 className="text-2xl font-bold mb-4">{NOUNS.VERIFY_EMAIL}</h1>
         <form onSubmit={handleSubmit}>
@@ -122,6 +120,6 @@ export default function VerifyPage() {
         sitekey="6LcmBRIqAAAAAKVj_DiSJyk7QMydAJk4uAVCFz4I"
         className="mt-5 flex justify-center"
       />
-    </div>
+    </>
   );
 }

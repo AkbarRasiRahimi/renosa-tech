@@ -21,7 +21,7 @@ export default async function RootLayout({ children: children }: { children: Rea
     <html lang="en" data-theme="mytheme">
       <body className={inter.className}>
         <SessionProvider session={session}>
-          <main className="flex h-screen w-screen items-center justify-center">
+          <main className="flex h-screen w-screen items-center justify-center text-xs">
             <Toaster position="top-right" />
             <div className="bg-neutral-focus relative flex h-screen w-screen flex-col items-center justify-center">
               <Image src={bgImage} alt="bg" className="w-full h-full object-cover absolute top-0 left-0 " />
