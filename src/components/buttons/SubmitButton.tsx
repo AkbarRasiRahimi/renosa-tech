@@ -1,5 +1,3 @@
-"use client";
-
 function SubmitButton(props: any) {
   return (
     <button

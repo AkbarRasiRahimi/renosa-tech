@@ -168,7 +168,7 @@ export const NOUNS = {
   TICKET: "Ticket",
   CONTACT_FORM: "Contact Form",
   ANNOUNCEMENT: "Announcement",
-  WELCOME: "Welcome !",
+  WELCOME: "Welcome ! To : ",
   SUCCESS: "success",
   WARNING: "warning",
   ERROR: "error",

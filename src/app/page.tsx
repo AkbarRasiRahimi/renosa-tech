@@ -7,14 +7,15 @@ import { redirect, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import ReCAPTCHA from "react-google-recaptcha";
-import { useFormState } from "react-dom";
+import { useFormState } from "react-dom"; // Ensure this is the correct import
 import { signInAction } from "@/actions/auth-actions";
-import SubmitButton from "@/components/SubmitButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
 import { signIn } from "next-auth/react";
 import { MESSAGES } from "@/enums/enums.js";
 import { NOUNS } from "@/enums/nouns.js";
-import SocialSignIn from "@/components/SocialSignIn";
+import SocialButtonsContainer from "@/components/SocialButtonsContainer";
 import SideAds from "@/components/SideAds";
+import ReCaptcha from "@/components/google/ReCaptcha";
 
 const loginCredentials = async (email: string, password: string) => {
   try {
@@ -33,6 +34,7 @@ type FormState = {
     email?: string;
     password?: string;
     recaptcha?: string;
+    display_name?: string;
   };
   messages?: {
     type?: string;
@@ -40,30 +42,30 @@ type FormState = {
   };
 };
 
-type ReCaptchaInstance = any;
-
 export default function SignInPage() {
-  const [formState, formAction]: [FormState, (data: Record<string, any>) => Promise<void>] = useFormState(
-    signInAction,
-    {}
-  );
+  const initialState: FormState = {};
+
+  const [formState, formAction] = useFormState(signInAction, initialState);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const recaptchaRef = useRef<ReCaptchaInstance | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => {
-    if (formState.messages && formState.messages.type === NOUNS.SUCCESS) {
-      toast.success(formState.messages.text);
-      if (emailRef.current && passwordRef.current) {
-        loginCredentials(emailRef.current.value, passwordRef.current.value);
-      }
-    } else if (formState.messages && formState.messages.type === NOUNS.WARNING) {
-      toast.error(formState.messages.text);
-      if (formState.messages.text === MESSAGES.MUST_EMAIL_VERIFICATION().text && emailRef.current) {
-        router.push(`/verify?email=${emailRef.current.value}`);
+    if (formState.messages) {
+      const { type, text } = formState.messages;
+      if (text && type === NOUNS.SUCCESS) {
+        toast.success(text);
+        if (emailRef.current && passwordRef.current) {
+          loginCredentials(emailRef.current.value, passwordRef.current.value);
+        }
+      } else if (text && type === NOUNS.WARNING) {
+        toast.error(text);
+        if (text === MESSAGES.MUST_EMAIL_VERIFICATION().text && emailRef.current) {
+          router.push(`/verify?email=${emailRef.current.value}`);
+        }
       }
     }
 
@@ -81,9 +83,13 @@ export default function SignInPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
-    const recaptchaValue = await recaptchaRef.current.executeAsync();
-    const formData = new FormData(event.target);
-    formData.append("recaptcha", recaptchaValue);
+    const recaptchaValue = await recaptchaRef.current?.executeAsync();
+    const formData = {
+      email: emailRef.current?.value as string,
+      password: passwordRef.current?.value as string,
+      recaptcha: recaptchaValue as string,
+    };
+    console.log(formData);
     formAction(formData);
   };
 
@@ -92,7 +98,10 @@ export default function SignInPage() {
       <div className="flex gap-1">
         <div className="card w-full bg-base-100 shadow-xl sm:w-96">
           <div className="card-body p-6">
-            <h1 className="mb-3 text-center text-3xl font-bold">{NOUNS.WELCOME}</h1>
+            <h1 className="mb-3 text-center text-3xl font-bold">
+              {NOUNS.WELCOME}
+              <span className="text-primary">{process.env.NEXT_PUBLIC_APP_NAME}</span>
+            </h1>
             <form onSubmit={handleSubmit}>
               <div className="form-control">
                 <label className="label">{NOUNS.EMAIL}</label>
@@ -104,7 +113,9 @@ export default function SignInPage() {
                   className="input input-sm input-bordered text-xs input-primary w-full bg-transparent"
                   placeholder={NOUNS.EMAIL}
                 />
+                {formState.errors?.email && <span className="text-error mt-1">{formState.errors.email}</span>}
               </div>
+
               <div className="form-control relative my-3">
                 <label className="label">{NOUNS.PASSWORD}</label>
                 <div className="relative">
@@ -125,15 +136,8 @@ export default function SignInPage() {
                     {showPassword ? <FaRegEye className="h-4 w-4" /> : <FaRegEyeSlash className="h-4 w-4" />}
                   </button>
                 </div>
+                {formState.errors?.password && <span className="text-error mt-1">{formState.errors.password}</span>}
               </div>
-              {formState.errors && (
-                <ul className="mt-4 text-error">
-                  {Object.keys(formState.errors).map((key) => (
-                    <li key={key}>{formState.errors[key]}</li>
-                  ))}
-                </ul>
-              )}
-
               <p className="text-center text-xs">
                 {NOUNS.FORGETPASSWORD}
                 <Link href="/reset-password" className="ml-2 font-bold text-primary hover:underline">
@@ -143,7 +147,7 @@ export default function SignInPage() {
               <SubmitButton text={NOUNS.SIGNIN} isLoading={isLoading} />
             </form>
             <div className="divider">{NOUNS.OR}</div>
-            <SocialSignIn />
+            <SocialButtonsContainer />
             <p className="mt-4 text-center text-xs">
               {NOUNS.SIGNUPTEXT}
               <Link href="/register" className="ml-2 font-bold text-primary hover:underline">
@@ -154,16 +158,7 @@ export default function SignInPage() {
         </div>
         <SideAds />
       </div>
-
-      <ReCAPTCHA
-        ref={recaptchaRef}
-        size="invisible"
-        onErrored={() => {
-          toast.error(NOUNS.RECAPTCHA_FAILED);
-        }}
-        sitekey="6LcmBRIqAAAAAKVj_DiSJyk7QMydAJk4uAVCFz4I"
-        className="mt-5 flex justify-center"
-      />
+      <ReCaptcha recaptchaRef={recaptchaRef} />
     </div>
   );
 }

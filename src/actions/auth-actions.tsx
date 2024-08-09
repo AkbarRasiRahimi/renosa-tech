@@ -8,14 +8,35 @@ import { ResetToken } from "@/model/reset-token-model";
 import sendVerifyEmail from "@/actions/email-actions";
 import { VerificationToken } from "@/model/verification-token-model";
 
-export async function signup(prevState, formData) {
-  const email = formData.get("email");
-  const password = formData.get("password");
-  const displayName = formData.get("displayName");
-  const recaptcha = formData.get("recaptcha");
+type FormData = {
+  token?: string;
+  email?: string;
+  password?: string;
+  displayName?: string;
+  recaptcha?: string;
+};
 
-  let errors = {};
-  let messages = {};
+type FormState = {
+  errors?: {
+    email?: string;
+    password?: string;
+    recaptcha?: string;
+    display_name?: string;
+  };
+  messages?: {
+    type?: string;
+    text?: string;
+  };
+};
+
+export async function signUpAction(prevState: FormState, formData: FormData) {
+  const email = formData.email;
+  const password = formData.password || "";
+  const displayName = formData.displayName;
+  const recaptcha = formData.recaptcha;
+
+  let errors: FormState["errors"] = {};
+  let messages: FormState["messages"] = {};
 
   if (typeof displayName !== "string" || displayName.length < 3 || displayName.length > 255) {
     errors.display_name = ERRORS.INVALID_DISPLAY_NAME;
@@ -92,7 +113,7 @@ export async function signup(prevState, formData) {
         errors: {},
       };
     }
-  } catch (error) {
+  } catch (error: any) {
     return {
       errors,
       messages: {
@@ -103,13 +124,15 @@ export async function signup(prevState, formData) {
   }
 }
 
-export async function signInAction(prevState, formData) {
-  const email = formData.get("email");
-  const password = formData.get("password");
-  const recaptcha = formData.get("recaptcha");
+export async function signInAction(prevState: FormState, formData: FormData) {
+  const email = formData.email;
+  const password = formData.password || "";
+  const recaptcha = formData.recaptcha;
 
-  let errors = {};
-  let messages = {};
+  console.log(email, password);
+
+  let errors: FormState["errors"] = {};
+  let messages: FormState["messages"] = {};
 
   if (typeof email !== "string" || !/^[\w.-]+@[\w.-]+\.[A-Za-z]{2,}$/i.test(email)) {
     errors.email = ERRORS.INVALID_EMAIL;
@@ -200,13 +223,13 @@ export async function signInAction(prevState, formData) {
   }
 }
 
-export async function resetPassword(prevState, formData) {
-  const token = formData.get("token");
-  const password = formData.get("password");
-  const recaptcha = formData.get("recaptcha");
+export async function resetPassword(prevState: FormState, formData: FormData) {
+  const token = formData.token;
+  const password = formData.password || "";
+  const recaptcha = formData.recaptcha;
 
-  let errors = {};
-  let messages = {};
+  let errors: FormState["errors"] = {};
+  let messages: FormState["messages"] = {};
 
   if (typeof password !== "string" || password.length < 6 || password.length > 255) {
     errors.password = ERRORS.INVALID_PASSWORD;
@@ -263,7 +286,7 @@ export async function resetPassword(prevState, formData) {
   return { errors, messages };
 }
 
-export const checkResetToken = async (resetToken) => {
+export const checkResetToken = async (resetToken: string) => {
   try {
     const resetTokenExists = await ResetToken.findOne({ token: resetToken });
     if (resetTokenExists) {
@@ -276,10 +299,8 @@ export const checkResetToken = async (resetToken) => {
   }
 };
 
-
 // Modify your getUserProfile function
-export const getUserProfile = async (email) => {
+export const getUserProfile = async (email: string) => {
   const user = await User.findOne({ email }).lean(); // Use .lean() to get a plain JavaScript object
   return user;
 };
-
